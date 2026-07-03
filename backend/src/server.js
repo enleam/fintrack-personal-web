@@ -13,6 +13,8 @@ const metaRoutes = require('./routes/meta.routes');
 
 const app = express();
 
+console.log('SERVER VERSION: CORS VERCEL MONIFRONT v2');
+
 const allowedOrigins = [
   'http://localhost:5173',
   'https://monifront.vercel.app',
@@ -47,14 +49,16 @@ app.use(express.json());
 
 app.get('/', (req, res) => {
   res.json({
-    mensaje: 'API Moni funcionando correctamente.'
+    mensaje: 'API Moni funcionando correctamente.',
+    version: 'cors-vercel-v2'
   });
 });
 
 app.get('/api/health', (req, res) => {
   res.json({
     mensaje: 'Backend Moni activo.',
-    estado: 'OK'
+    estado: 'OK',
+    version: 'cors-vercel-v2'
   });
 });
 
