@@ -6,10 +6,10 @@ const dbConfig = {
   password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER,
   database: process.env.DB_DATABASE,
-  port: Number(process.env.DB_PORT),
+  port: Number(process.env.DB_PORT || 1433),
   options: {
-    encrypt: false,
-    trustServerCertificate: true
+    encrypt: process.env.DB_ENCRYPT === 'true',
+    trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true'
   }
 };
 
