@@ -1,35 +1,105 @@
-CREATE DATABASE FinTrackPersonalDB;
+/* =========================
+   MONI - SCHEMA AZURE SQL
+========================= */
+
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'auth')
+BEGIN
+    EXEC('CREATE SCHEMA auth');
+END
 GO
 
-USE FinTrackPersonalDB;
-GO
-
-CREATE SCHEMA auth;
-GO
-
-CREATE SCHEMA finance;
-GO
-
-CREATE TABLE auth.Usuario (
-    usuario_id INT IDENTITY(1,1) PRIMARY KEY,
-    nombre NVARCHAR(100) NOT NULL,
-    correo NVARCHAR(150) NOT NULL UNIQUE,
-    password_hash NVARCHAR(255) NOT NULL,
-    fecha_registro DATETIME2 DEFAULT SYSDATETIME(),
-    activo BIT DEFAULT 1
-);
-GO
-
-IF NOT EXISTS (
-    SELECT * FROM sys.schemas WHERE name = 'finance'
-)
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'finance')
 BEGIN
     EXEC('CREATE SCHEMA finance');
 END
 GO
 
+/* =========================
+   AUTH.USUARIO
+========================= */
+
 IF NOT EXISTS (
-    SELECT * 
+    SELECT *
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = 'auth'
+      AND TABLE_NAME = 'Usuario'
+)
+BEGIN
+    CREATE TABLE auth.Usuario (
+        usuario_id INT IDENTITY(1,1) PRIMARY KEY,
+        nombre NVARCHAR(100) NOT NULL,
+        correo NVARCHAR(150) NOT NULL UNIQUE,
+        password_hash NVARCHAR(255) NOT NULL,
+        fecha_registro DATETIME2 DEFAULT SYSDATETIME(),
+        activo BIT DEFAULT 1,
+        email_verificado BIT NOT NULL DEFAULT 0
+    );
+END
+GO
+
+IF COL_LENGTH('auth.Usuario', 'email_verificado') IS NULL
+BEGIN
+    ALTER TABLE auth.Usuario
+    ADD email_verificado BIT NOT NULL DEFAULT 0;
+END
+GO
+
+/* =========================
+   AUTH.TOKEN RECUPERACION PASSWORD
+========================= */
+
+IF NOT EXISTS (
+    SELECT *
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = 'auth'
+      AND TABLE_NAME = 'TokenRecuperacionPassword'
+)
+BEGIN
+    CREATE TABLE auth.TokenRecuperacionPassword (
+        token_id INT IDENTITY(1,1) PRIMARY KEY,
+        usuario_id INT NOT NULL,
+        token_hash NVARCHAR(255) NOT NULL,
+        fecha_expiracion DATETIME2 NOT NULL,
+        usado BIT DEFAULT 0,
+        fecha_registro DATETIME2 DEFAULT SYSDATETIME(),
+
+        CONSTRAINT FK_TokenRecuperacion_Usuario
+        FOREIGN KEY (usuario_id) REFERENCES auth.Usuario(usuario_id)
+    );
+END
+GO
+
+/* =========================
+   AUTH.TOKEN VERIFICACION EMAIL
+========================= */
+
+IF NOT EXISTS (
+    SELECT *
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = 'auth'
+      AND TABLE_NAME = 'TokenVerificacionEmail'
+)
+BEGIN
+    CREATE TABLE auth.TokenVerificacionEmail (
+        token_id INT IDENTITY(1,1) PRIMARY KEY,
+        usuario_id INT NOT NULL,
+        token_hash NVARCHAR(255) NOT NULL,
+        fecha_expiracion DATETIME2 NOT NULL,
+        usado BIT DEFAULT 0,
+        fecha_registro DATETIME2 DEFAULT SYSDATETIME(),
+
+        CONSTRAINT FK_TokenVerificacionEmail_Usuario
+        FOREIGN KEY (usuario_id) REFERENCES auth.Usuario(usuario_id)
+    );
+END
+GO
+
+/* =========================
+   FINANCE.CATEGORIA
+========================= */
+
+IF NOT EXISTS (
+    SELECT *
     FROM INFORMATION_SCHEMA.TABLES
     WHERE TABLE_SCHEMA = 'finance'
       AND TABLE_NAME = 'Categoria'
@@ -53,11 +123,12 @@ BEGIN
 END
 GO
 
---Prueba
-SELECT * FROM finance.Categoria;
+/* =========================
+   FINANCE.MOVIMIENTO
+========================= */
 
 IF NOT EXISTS (
-    SELECT * 
+    SELECT *
     FROM INFORMATION_SCHEMA.TABLES
     WHERE TABLE_SCHEMA = 'finance'
       AND TABLE_NAME = 'Movimiento'
@@ -90,29 +161,12 @@ BEGIN
 END
 GO
 
---Prueba
-SELECT * FROM finance.Movimiento;
-
-SELECT 
-    m.movimiento_id,
-    u.nombre AS usuario,
-    c.nombre AS categoria,
-    m.tipo,
-    m.monto,
-    m.fecha,
-    m.descripcion,
-    m.metodo_pago,
-    m.activo,
-    m.fecha_registro
-FROM finance.Movimiento m
-INNER JOIN auth.Usuario u
-    ON m.usuario_id = u.usuario_id
-INNER JOIN finance.Categoria c
-    ON m.categoria_id = c.categoria_id
-ORDER BY m.movimiento_id DESC;
+/* =========================
+   FINANCE.PRESUPUESTO MENSUAL
+========================= */
 
 IF NOT EXISTS (
-    SELECT * 
+    SELECT *
     FROM INFORMATION_SCHEMA.TABLES
     WHERE TABLE_SCHEMA = 'finance'
       AND TABLE_NAME = 'PresupuestoMensual'
@@ -149,69 +203,13 @@ BEGIN
 END
 GO
 
---Prueba
-SELECT * FROM finance.PresupuestoMensual;
-
-SELECT 
-    p.presupuesto_id,
-    u.nombre AS usuario,
-    c.nombre AS categoria,
-    p.anio,
-    p.mes,
-    p.monto_presupuestado,
-    p.activo,
-    p.fecha_registro
-FROM finance.PresupuestoMensual p
-INNER JOIN auth.Usuario u
-    ON p.usuario_id = u.usuario_id
-INNER JOIN finance.Categoria c
-    ON p.categoria_id = c.categoria_id
-ORDER BY p.presupuesto_id DESC;
-
-SELECT 
-    presupuesto_id,
-    usuario_id,
-    categoria_id,
-    anio,
-    mes,
-    monto_presupuestado,
-    activo
-FROM finance.PresupuestoMensual
-ORDER BY presupuesto_id DESC;
+/* =========================
+   FINANCE.META AHORRO
+========================= */
 
 IF NOT EXISTS (
-    SELECT * 
+    SELECT *
     FROM INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_SCHEMA = 'auth'
-      AND TABLE_NAME = 'TokenRecuperacionPassword'
-)
-BEGIN
-    CREATE TABLE auth.TokenRecuperacionPassword (
-        token_id INT IDENTITY(1,1) PRIMARY KEY,
-        usuario_id INT NOT NULL,
-        token_hash NVARCHAR(255) NOT NULL,
-        fecha_expiracion DATETIME2 NOT NULL,
-        usado BIT DEFAULT 0,
-        fecha_registro DATETIME2 DEFAULT SYSDATETIME(),
-
-        CONSTRAINT FK_TokenRecuperacion_Usuario
-        FOREIGN KEY (usuario_id) REFERENCES auth.Usuario(usuario_id)
-    );
-END
-GO
-
---Prueba
-SELECT 
-    token_id,
-    usuario_id,
-    fecha_expiracion,
-    usado,
-    fecha_registro
-FROM auth.TokenRecuperacionPassword
-ORDER BY token_id DESC;
-
-IF NOT EXISTS (
-    SELECT * FROM INFORMATION_SCHEMA.TABLES
     WHERE TABLE_SCHEMA = 'finance'
       AND TABLE_NAME = 'MetaAhorro'
 )
@@ -243,49 +241,12 @@ BEGIN
 END
 GO
 
---Prueba
+/* =========================
+   VERIFICACION FINAL
+========================= */
+
 SELECT
-    meta_id,
-    usuario_id,
-    nombre,
-    monto_objetivo,
-    monto_actual,
-    fecha_objetivo,
-    estado,
-    activo,
-    fecha_registro
-FROM finance.MetaAhorro
-ORDER BY meta_id DESC;
-
-IF COL_LENGTH('auth.Usuario', 'email_verificado') IS NULL
-BEGIN
-    ALTER TABLE auth.Usuario
-    ADD email_verificado BIT NOT NULL DEFAULT 0;
-END
-GO
-
-UPDATE auth.Usuario
-SET email_verificado = 1
-WHERE email_verificado = 0;
-GO
-
-IF NOT EXISTS (
-    SELECT * 
-    FROM INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_SCHEMA = 'auth'
-      AND TABLE_NAME = 'TokenVerificacionEmail'
-)
-BEGIN
-    CREATE TABLE auth.TokenVerificacionEmail (
-        token_id INT IDENTITY(1,1) PRIMARY KEY,
-        usuario_id INT NOT NULL,
-        token_hash NVARCHAR(255) NOT NULL,
-        fecha_expiracion DATETIME2 NOT NULL,
-        usado BIT DEFAULT 0,
-        fecha_registro DATETIME2 DEFAULT SYSDATETIME(),
-
-        CONSTRAINT FK_TokenVerificacionEmail_Usuario
-        FOREIGN KEY (usuario_id) REFERENCES auth.Usuario(usuario_id)
-    );
-END
-GO
+    TABLE_SCHEMA,
+    TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
+ORDER BY TABLE_SCHEMA, TABLE_NAME;
