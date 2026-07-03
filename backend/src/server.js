@@ -13,16 +13,48 @@ const metaRoutes = require('./routes/meta.routes');
 
 const app = express();
 
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
-}));
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://monifront.vercel.app',
+  'https://moni-ruby.vercel.app',
+  process.env.FRONTEND_URL,
+  ...(process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
+    : [])
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permite peticiones sin origin, como Postman, Yaak o health checks
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Origen no permitido por CORS: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
 app.get('/', (req, res) => {
   res.json({
     mensaje: 'API Moni funcionando correctamente.'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    mensaje: 'Backend Moni activo.',
+    estado: 'OK'
   });
 });
 
