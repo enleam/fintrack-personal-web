@@ -12,40 +12,28 @@ const metaRoutes = require('./routes/meta.routes');
 
 const app = express();
 
-console.log('SERVER VERSION: CORS MANUAL MONIFRONT v3');
-
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://monifront.vercel.app',
-  'https://moni-ruby.vercel.app',
-  process.env.FRONTEND_URL,
-  ...(process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
-    : [])
-].filter(Boolean);
+console.log('SERVER VERSION: CORS OPEN V4');
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
-  if (!origin || allowedOrigins.includes(origin)) {
-    if (origin) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-      res.setHeader('Vary', 'Origin');
-    }
-
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader(
-      'Access-Control-Allow-Methods',
-      'GET,POST,PUT,PATCH,DELETE,OPTIONS'
-    );
-    res.setHeader(
-      'Access-Control-Allow-Headers',
-      'Content-Type, Authorization'
-    );
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
   }
 
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET,POST,PUT,PATCH,DELETE,OPTIONS'
+  );
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, X-Requested-With'
+  );
+
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
+    return res.status(204).end();
   }
 
   next();
@@ -56,7 +44,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.json({
     mensaje: 'API Moni funcionando correctamente.',
-    version: 'cors-manual-v3'
+    version: 'cors-open-v4'
   });
 });
 
@@ -64,7 +52,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     mensaje: 'Backend Moni activo.',
     estado: 'OK',
-    version: 'cors-manual-v3'
+    version: 'cors-open-v4'
   });
 });
 
