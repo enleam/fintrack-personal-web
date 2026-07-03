@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth.routes');
@@ -13,7 +12,7 @@ const metaRoutes = require('./routes/meta.routes');
 
 const app = express();
 
-console.log('SERVER VERSION: CORS VERCEL MONIFRONT v2');
+console.log('SERVER VERSION: CORS MANUAL MONIFRONT v3');
 
 const allowedOrigins = [
   'http://localhost:5173',
@@ -25,32 +24,39 @@ const allowedOrigins = [
     : [])
 ].filter(Boolean);
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Permite peticiones sin origin, como Postman, Yaak o health checks
-    if (!origin) {
-      return callback(null, true);
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (!origin || allowedOrigins.includes(origin)) {
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
     }
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader(
+      'Access-Control-Allow-Methods',
+      'GET,POST,PUT,PATCH,DELETE,OPTIONS'
+    );
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization'
+    );
+  }
 
-    return callback(new Error(`Origen no permitido por CORS: ${origin}`));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
 
-app.use(cors(corsOptions));
+  next();
+});
 
 app.use(express.json());
 
 app.get('/', (req, res) => {
   res.json({
     mensaje: 'API Moni funcionando correctamente.',
-    version: 'cors-vercel-v2'
+    version: 'cors-manual-v3'
   });
 });
 
@@ -58,7 +64,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     mensaje: 'Backend Moni activo.',
     estado: 'OK',
-    version: 'cors-vercel-v2'
+    version: 'cors-manual-v3'
   });
 });
 
