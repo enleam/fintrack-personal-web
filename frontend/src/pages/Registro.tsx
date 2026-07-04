@@ -13,7 +13,6 @@ function Registro() {
 
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
-  const [verificationLink, setVerificationLink] = useState('');
 
   const [cargando, setCargando] = useState(false);
 
@@ -24,7 +23,6 @@ function Registro() {
       setCargando(true);
       setMensaje('');
       setError('');
-      setVerificationLink('');
 
       if (!nombre.trim() || !correo.trim() || !password || !confirmarPassword) {
         setError('Completa todos los campos.');
@@ -48,7 +46,6 @@ function Registro() {
       });
 
       setMensaje(response.mensaje);
-      setVerificationLink(response.verificationLink || '');
 
       setNombre('');
       setCorreo('');
@@ -127,18 +124,6 @@ function Registro() {
 
           {error && (
             <p className="error-message">{error}</p>
-          )}
-
-          {verificationLink && (
-            <div className="dev-reset-box">
-              <strong>Link de verificación en modo desarrollo:</strong>
-              <p>
-                Usa este enlace solo para pruebas locales.
-              </p>
-              <a href={verificationLink}>
-                {verificationLink}
-              </a>
-            </div>
           )}
 
           <button type="submit" disabled={cargando}>

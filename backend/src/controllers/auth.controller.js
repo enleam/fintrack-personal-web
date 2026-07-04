@@ -113,15 +113,9 @@ const registrarUsuario = async (req, res) => {
       verificationLink
     });
 
-    const respuesta = {
+    return res.status(201).json({
       mensaje: 'Usuario registrado correctamente. Revisa tu correo para verificar tu cuenta.'
-    };
-
-    if (process.env.MAIL_MODE !== 'gmail') {
-      respuesta.verificationLink = verificationLink;
-    }
-
-    return res.status(201).json(respuesta);
+    });
 
   } catch (error) {
     console.error('Error al registrar usuario:', error);
@@ -284,15 +278,9 @@ const solicitarRecuperacionPassword = async (req, res) => {
       resetLink
     });
 
-    const respuesta = {
+    return res.status(200).json({
       mensaje: mensajeGenerico
-    };
-
-    if (process.env.MAIL_MODE !== 'gmail') {
-      respuesta.resetLink = resetLink;
-    }
-
-    return res.status(200).json(respuesta);
+    });
 
   } catch (error) {
     console.error('Error al solicitar recuperación de contraseña:', error);
