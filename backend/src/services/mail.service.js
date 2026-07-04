@@ -2,13 +2,21 @@ const nodemailer = require('nodemailer');
 
 const crearTransporter = () => {
   return nodemailer.createTransport({
-    host: process.env.MAIL_HOST,
+    host: process.env.MAIL_HOST || 'smtp.gmail.com',
     port: Number(process.env.MAIL_PORT || 587),
     secure: process.env.MAIL_SECURE === 'true',
+
+    // Fuerza IPv4 para evitar error ENETUNREACH en Render
+    family: 4,
+
     auth: {
       user: process.env.MAIL_USER,
       pass: process.env.MAIL_PASS
-    }
+    },
+
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000
   });
 };
 
@@ -134,5 +142,6 @@ const enviarCorreoVerificacionEmail = async ({
 
 module.exports = {
   enviarCorreoRecuperacionPassword,
-  enviarCorreoVerificacionEmail
+  enviarCorreoVerificacionEmail,
+  crearTransporter
 };
