@@ -1,12 +1,14 @@
 const nodemailer = require('nodemailer');
 
 const crearTransporter = () => {
+  const port = Number(process.env.MAIL_PORT || 465);
+
   return nodemailer.createTransport({
     host: process.env.MAIL_HOST || 'smtp.gmail.com',
-    port: Number(process.env.MAIL_PORT || 587),
-    secure: process.env.MAIL_SECURE === 'true',
+    port,
+    secure: process.env.MAIL_SECURE === 'true' || port === 465,
 
-    // Fuerza IPv4 para evitar error ENETUNREACH en Render
+    // Fuerza IPv4 para evitar errores de red en Render
     family: 4,
 
     auth: {
@@ -14,9 +16,13 @@ const crearTransporter = () => {
       pass: process.env.MAIL_PASS
     },
 
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000
+    tls: {
+      servername: process.env.MAIL_HOST || 'smtp.gmail.com'
+    },
+
+    connectionTimeout: 60000,
+    greetingTimeout: 60000,
+    socketTimeout: 60000
   });
 };
 
