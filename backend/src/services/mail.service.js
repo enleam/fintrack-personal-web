@@ -1,35 +1,47 @@
-const { Resend } = require('resend');
-
-const crearClienteResend = () => {
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('RESEND_API_KEY no está configurada.');
-  }
-
-  return new Resend(apiKey);
-};
-
-const enviarCorreoResend = async ({
+const enviarCorreoGoogleAppsScript = async ({
   correoDestino,
-  nombreDestino,
   subject,
   html
 }) => {
-  const resend = crearClienteResend();
+  const url = process.env.GOOGLE_APPS_SCRIPT_EMAIL_URL;
+  const secret = process.env.GOOGLE_APPS_SCRIPT_EMAIL_SECRET;
 
-  const fromName = process.env.MAIL_FROM_NAME || 'Moni';
-  const fromEmail = process.env.MAIL_FROM_EMAIL || 'onboarding@resend.dev';
+  if (!url) {
+    throw new Error('GOOGLE_APPS_SCRIPT_EMAIL_URL no está configurada.');
+  }
 
-  const { data, error } = await resend.emails.send({
-    from: `${fromName} <${fromEmail}>`,
-    to: [correoDestino],
-    subject,
-    html
+  if (!secret) {
+    throw new Error('GOOGLE_APPS_SCRIPT_EMAIL_SECRET no está configurada.');
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify({
+      secret,
+      to: correoDestino,
+      subject,
+      html,
+      fromName: process.env.MAIL_FROM_NAME || 'Moni'
+    })
   });
 
-  if (error) {
-    throw new Error(`Error Resend: ${JSON.stringify(error)}`);
+  const text = await response.text();
+
+  let data;
+
+  try {
+    data = JSON.parse(text);
+  } catch (error) {
+    throw new Error(`Respuesta inválida de Google Apps Script: ${text}`);
+  }
+
+  if (!response.ok || !data.ok) {
+    throw new Error(
+      data.mensaje || 'No se pudo enviar el correo con Google Apps Script.'
+    );
   }
 
   return data;
@@ -40,7 +52,7 @@ const enviarCorreoRecuperacionPassword = async ({
   nombre,
   resetLink
 }) => {
-  if (process.env.MAIL_MODE !== 'resend') {
+  if (process.env.MAIL_MODE !== 'google_apps_script') {
     console.log('MAIL_MODE dev. Link de recuperación:', resetLink);
     return;
   }
@@ -84,9 +96,8 @@ const enviarCorreoRecuperacionPassword = async ({
     </div>
   `;
 
-  await enviarCorreoResend({
+  await enviarCorreoGoogleAppsScript({
     correoDestino,
-    nombreDestino: nombre,
     subject: 'Recupera tu contraseña de Moni',
     html
   });
@@ -97,7 +108,7 @@ const enviarCorreoVerificacionEmail = async ({
   nombre,
   verificationLink
 }) => {
-  if (process.env.MAIL_MODE !== 'resend') {
+  if (process.env.MAIL_MODE !== 'google_apps_script') {
     console.log('MAIL_MODE dev. Link de verificación:', verificationLink);
     return;
   }
@@ -141,9 +152,8 @@ const enviarCorreoVerificacionEmail = async ({
     </div>
   `;
 
-  await enviarCorreoResend({
+  await enviarCorreoGoogleAppsScript({
     correoDestino,
-    nombreDestino: nombre,
     subject: 'Verifica tu cuenta de Moni',
     html
   });
