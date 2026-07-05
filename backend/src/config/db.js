@@ -23,16 +23,6 @@ const dbConfig = {
   }
 };
 
-console.log('DB CONFIG:', {
-  server: process.env.DB_SERVER,
-  database: process.env.DB_DATABASE,
-  port: process.env.DB_PORT,
-  encrypt: process.env.DB_ENCRYPT,
-  trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE,
-  userExists: Boolean(process.env.DB_USER),
-  passwordExists: Boolean(process.env.DB_PASSWORD)
-});
-
 const poolPromise = new sql.ConnectionPool(dbConfig)
   .connect()
   .then((pool) => {
